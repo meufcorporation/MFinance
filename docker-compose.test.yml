@@ -1,0 +1,78 @@
+# MFinance - Test Docker Compose
+# Configuration for running tests
+version: '3.8'
+
+services:
+  # Test Database
+  postgres-test:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_DB: mfinance_test
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5433:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Test Redis
+  redis-test:
+    image: redis:7-alpine
+    ports:
+      - "6380:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Backend Tests
+  backend-test:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.test
+    environment:
+      - DEBUG=True
+      - DB_HOST=postgres-test
+      - DB_NAME=mfinance_test
+      - DB_USER=postgres
+      - DB_PASSWORD=postgres
+      - REDIS_URL=redis://redis-test:6379/0
+      - CELERY_BROKER_URL=redis://redis-test:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis-test:6379/0
+      - TESTING=True
+    volumes:
+      - ./backend:/app
+      - test-results:/app/test-results
+    depends_on:
+      postgres-test:
+        condition: service_healthy
+      redis-test:
+        condition: service_healthy
+    command: >
+      sh -c "python manage.py migrate &&
+             python manage.py collectstatic --noinput &&
+             pytest --cov=. --cov-report=html --cov-report=xml --junitxml=test-results/junit.xml"
+
+  # Frontend Tests
+  frontend-test:
+    build:
+      context: ./frontend/web-cabinet
+      dockerfile: Dockerfile
+      target: development
+    environment:
+      - NODE_ENV=test
+      - NEXT_PUBLIC_API_URL=http://localhost:8000/api
+    volumes:
+      - ./frontend/web-cabinet:/app
+      - /app/node_modules
+      - /app/.next
+    command: >
+      sh -c "npm ci &&
+             npm run test"
+
+volumes:
+  test-results:
