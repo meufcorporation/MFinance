@@ -235,9 +235,9 @@ services:
     environment:
       - NEXTAUTH_URL=http://localhost:3000
       - NEXTAUTH_SECRET=your-secret-key-change-in-production
-      - KEYCLOAK_ISSUER=http://localhost:8080/realms/mfinance
       - KEYCLOAK_CLIENT_ID=mfinance-web
-      - KEYCLOAK_CLIENT_SECRET=your-client-secret
+      - KEYCLOAK_CLIENT_SECRET=mfinance-secret-key-2024
+      - KEYCLOAK_ISSUER=http://localhost:8080/realms/mfinance
       - NEXT_PUBLIC_API_URL=http://localhost:8000/api
     volumes:
       - ./frontend/web-cabinet:/app

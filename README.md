@@ -1,350 +1,228 @@
-# MFinance - Financial Management System
+# MFinance - Фінансовий менеджер для ФОП
 
-Комплексна система управління фінансами для ФОП та малого бізнесу в Україні.
+MFinance - це комплексна система для управління фінансами та податковою звітністю для фізичних осіб-підприємців (ФОП) в Україні.
 
-## 🚀 Швидкий старт
+## 🚀 Основні можливості
 
-### Вимоги
-- Docker & Docker Compose
-- Git
-- 8GB RAM (рекомендовано)
+### 💰 Фінансове управління
+- **Управління рахунками** - банківські рахунки, готівка, криптовалюти
+- **Транзакції** - автоматичний імпорт з банків, ручне додавання
+- **Категорії** - налаштування категорій доходів та витрат
+- **Бюджети** - планування та контроль витрат
 
-### Запуск в режимі розробки
+### 🏢 ФОП управління
+- **Профілі ФОП** - управління профілями для різних видів діяльності
+- **Податкові періоди** - автоматичний розрахунок податків
+- **Зобов'язання** - відстеження податкових зобов'язань
+- **Платежі** - автоматична сплата податків
 
-```bash
-# Клонування репозиторію
-git clone <repository-url>
-cd MFinance
+### 📊 Звітність
+- **Автоматична генерація звітів** - ЄП, ЄСВ, ПДВ
+- **Цифровий підпис** - інтеграція з КЕП та Дія.Підпис
+- **Подача звітів** - автоматична подача до податкових органів
 
-# Запуск всіх сервісів
-make up
-# або
-docker-compose up -d
+### 🔐 Безпека
+- **OIDC аутентифікація** - через Keycloak
+- **JWT токени** - безпечний доступ до API
+- **Ролі та дозволи** - детальне управління доступом
+- **Аудит-лог** - відстеження всіх дій користувачів
 
-# Перевірка статусу
-make status
-# або
-docker-compose ps
-```
+## 🛠 Технологічний стек
 
-### Доступні сервіси
-
-| Сервіс | URL | Опис |
-|--------|-----|------|
-| **Frontend** | http://localhost:3000 | Web Cabinet (Next.js) |
-| **Backend API** | http://localhost:8000 | Django REST API |
-| **Admin Panel** | http://localhost:8000/admin | Django Admin |
-| **Grafana** | http://localhost:3001 | Моніторинг (admin/admin) |
-| **MinIO** | http://localhost:9000 | Файлове сховище (minioadmin/minioadmin) |
-| **Prometheus** | http://localhost:9090 | Метрики |
-| **RabbitMQ** | http://localhost:15672 | Message Broker (admin/admin) |
-| **Keycloak** | http://localhost:8080 | Identity Provider (admin/admin) |
-
-## 🏗️ Архітектура
-
-### Backend (Django)
-- **Python 3.11** + Django 5 + DRF
+### Backend
+- **Python 3.11** - основна мова програмування
+- **Django 5.2** - веб-фреймворк
+- **Django REST Framework** - API
 - **PostgreSQL** - основна база даних
-- **Redis** - кеш та брокер повідомлень
-- **Celery** - фонові завдання
-- **OpenTelemetry** - моніторинг
+- **Redis** - кешування та черги
+- **Celery** - асинхронні завдання
+- **Keycloak** - аутентифікація та авторизація
 
-### Frontend (Next.js)
-- **Next.js 14** з App Router
+### Frontend
+- **Next.js 15** - React фреймворк
+- **TypeScript** - типізація
 - **Tailwind CSS** - стилізація
+- **shadcn/ui** - UI компоненти
 - **NextAuth.js** - аутентифікація
-- **React Table** - таблиці даних
 
 ### Інфраструктура
+- **Docker** - контейнеризація
 - **Docker Compose** - оркестрація
-- **Prometheus + Grafana** - моніторинг
-- **MinIO** - файлове сховище
-- **Keycloak** - управління користувачами
+- **Prometheus** - моніторинг
+- **Grafana** - візуалізація метрик
+- **OpenTelemetry** - трейсинг
+
+## 📦 Встановлення
+
+### Передумови
+- Docker та Docker Compose
+- Node.js 20+
+- Python 3.11+
+
+### Швидкий старт
+
+1. **Клонуйте репозиторій**
+```bash
+git clone https://github.com/yourusername/mfinance.git
+cd mfinance
+```
+
+2. **Запустіть інфраструктуру**
+```bash
+make docker-up
+```
+
+3. **Встановіть залежності**
+```bash
+make install
+```
+
+4. **Налаштуйте базу даних**
+```bash
+make migrate
+```
+
+5. **Створіть суперкористувача**
+```bash
+make superuser
+```
+
+6. **Налаштуйте Keycloak**
+```bash
+make setup-keycloak
+```
+
+7. **Запустіть сервери розробки**
+```bash
+make dev
+```
+
+### Доступ до сервісів
+- **Frontend**: http://localhost:3000
+- **Backend API**: http://localhost:8000
+- **Keycloak**: http://localhost:8080
+- **Grafana**: http://localhost:3001
+- **Prometheus**: http://localhost:9090
+
+## 🧪 Тестування
+
+### Backend тести
+```bash
+make test-backend
+```
+
+### Frontend тести
+```bash
+make test-frontend
+```
+
+### E2E тести
+```bash
+make test-e2e
+```
+
+### Всі тести
+```bash
+make test
+```
 
 ## 📁 Структура проекту
 
 ```
-MFinance/
-├── backend/                 # Django Backend
-│   ├── finance/            # Фінансовий модуль
-│   ├── fop/                # ФОП модуль
-│   ├── notifications/      # Система нотифікацій
-│   ├── bank_integration/   # Інтеграція з банками
-│   ├── tax_calculations/   # Розрахунки податків
-│   ├── analytics/          # Аналітика
-│   └── mfinance/           # Основні налаштування
-├── frontend/               # Next.js Frontend
-│   └── web-cabinet/        # Web Cabinet
-├── mobile/                 # Flutter Mobile App
-├── infrastructure/         # Конфігурація інфраструктури
-├── docker-compose.yml      # Development
-├── docker-compose.prod.yml # Production
-├── docker-compose.test.yml # Testing
-└── Makefile               # Команди управління
+mfinance/
+├── backend/                 # Django backend
+│   ├── auth_system/        # Система аутентифікації
+│   ├── finance/            # Фінансові модулі
+│   ├── fop/               # ФОП модулі
+│   ├── payments/          # Платіжна система
+│   ├── reports/           # Система звітності
+│   ├── notifications/     # Сповіщення
+│   └── analytics/         # Аналітика
+├── frontend/              # Next.js frontend
+│   └── web-cabinet/      # Web Cabinet
+├── mobile/               # Flutter мобільний додаток (планується)
+├── infra/               # Docker Compose конфігурація
+├── scripts/            # Допоміжні скрипти
+└── tests/             # Тести
 ```
 
-## 🛠️ Команди управління
+## 🔧 Розробка
 
-### Основні команди
+### Backend розробка
 ```bash
-make up          # Запуск в режимі розробки
-make up-prod     # Запуск в production режимі
-make down        # Зупинка всіх сервісів
-make restart     # Перезапуск сервісів
-make logs        # Перегляд логів
-make status      # Статус сервісів
+cd backend
+python manage.py runserver
 ```
 
-### Розробка
+### Frontend розробка
 ```bash
-make build       # Збірка Docker образів
-make migrate     # Запуск міграцій
-make shell-backend   # Shell Django
-make shell-frontend  # Shell Next.js
+cd frontend/web-cabinet
+npm run dev
 ```
-
-### Тестування
-```bash
-make test        # Запуск всіх тестів
-make test-backend    # Тести backend
-make test-frontend   # Тести frontend
-make lint        # Перевірка коду
-make format      # Форматування коду
-```
-
-### Управління даними
-```bash
-make createsuperuser  # Створення адміна
-make loaddata         # Завантаження тестових даних
-make backup          # Резервна копія БД
-make restore FILE=backup.sql  # Відновлення БД
-```
-
-## 🔧 Налаштування
-
-### Environment Variables
-Скопіюйте `env.example` в `.env` та налаштуйте змінні:
-
-```bash
-cp env.example .env
-```
-
-### База даних
-```bash
-# Створення міграцій
-make migrate
-
-# Завантаження тестових даних
-make loaddata
-```
-
-### Аутентифікація
-За замовчуванням використовується тестовий користувач:
-- **Username**: `testuser`
-- **Password**: `testpass123`
-
-## 📊 Модулі системи
-
-### 1. Finance System
-- Управління рахунками
-- Імпорт транзакцій (CSV)
-- Категоризація витрат
-- Бюджети та аналітика
-
-### 2. FOP System
-- Профілі ФОП
-- Податкові періоди
-- Розрахунки податків
-- Зобов'язання
-
-### 3. Notifications
-- Email/SMS/Push повідомлення
-- Налаштування каналів
-- Шаблони повідомлень
-
-### 4. Bank Integration
-- Монобанк API
-- ПриватБанк API
-- Автоматичний імпорт транзакцій
-
-### 5. Tax Calculations
-- Автоматичний розрахунок податків
-- Єдиний податок, ЄСВ, ПДВ
-- Податкові пільги
-
-### 6. Analytics
-- Детальна аналітика фінансів
-- Звіти та дашборди
-- Тренди та прогнози
-
-## 🚀 Production Deployment
-
-### 1. Підготовка
-```bash
-# Налаштування environment
-cp env.example .env
-# Відредагуйте .env для production
-
-# Збірка production образів
-docker-compose -f docker-compose.prod.yml build
-```
-
-### 2. Запуск
-```bash
-# Запуск production
-docker-compose -f docker-compose.prod.yml up -d
-
-# Перевірка статусу
-docker-compose -f docker-compose.prod.yml ps
-```
-
-### 3. Nginx (опціонально)
-```bash
-# Налаштування Nginx reverse proxy
-cp infrastructure/nginx/nginx.conf.example infrastructure/nginx/nginx.conf
-# Відредагуйте конфігурацію
-```
-
-## 🧪 Тестування
 
 ### Запуск тестів
 ```bash
-# Всі тести
-make test
+# Backend
+cd backend
+python -m pytest tests/ -v
 
-# Тільки backend
-make test-backend
-
-# Тільки frontend
-make test-frontend
+# Frontend
+cd frontend/web-cabinet
+npm run test
 ```
 
-### Покриття коду
-```bash
-# Генерація звіту покриття
-docker-compose -f docker-compose.test.yml up --build
-```
+## 📊 Моніторинг
 
-## 📈 Моніторинг
+Система включає повний моніторинг через Prometheus та Grafana:
 
-### Grafana Dashboards
-- **System Metrics** - загальні метрики системи
-- **Application Metrics** - метрики додатку
-- **Database Metrics** - метрики бази даних
-- **Business Metrics** - бізнес метрики
-
-### Prometheus Targets
-- Backend API: `http://backend:8000/metrics`
-- Frontend: `http://frontend:3000/metrics`
-- PostgreSQL: `http://postgres:5432/metrics`
-- Redis: `http://redis:6379/metrics`
+- **Метрики додатку** - продуктивність, помилки
+- **Метрики бази даних** - запити, з'єднання
+- **Метрики Redis** - кеш, черги
+- **Метрики Celery** - завдання, черги
 
 ## 🔒 Безпека
 
-### Production Checklist
-- [ ] Змініть всі паролі за замовчуванням
-- [ ] Налаштуйте SSL сертифікати
-- [ ] Увімкніть MFA
-- [ ] Налаштуйте брандмауер
-- [ ] Регулярні резервні копії
-- [ ] Моніторинг безпеки
+- **OIDC аутентифікація** через Keycloak
+- **JWT токени** для API доступу
+- **HTTPS** в продакшені
+- **Шифрування** чутливих даних
+- **Аудит-лог** всіх дій
 
-### Environment Variables
-```bash
-# Обов'язково змініть в production
-SECRET_KEY=your-secret-key
-POSTGRES_PASSWORD=secure-password
-REDIS_PASSWORD=secure-password
-NEXTAUTH_SECRET=your-nextauth-secret
-```
+## 📈 Продуктивність
 
-## 🤝 Розробка
+- **Кешування** через Redis
+- **Асинхронні завдання** через Celery
+- **Оптимізація запитів** до бази даних
+- **CDN** для статичних файлів
 
-### Git Workflow
-```bash
-# Створення feature branch
-git checkout -b feature/new-feature
+## 🤝 Внесок у проект
 
-# Коміт змін
-git add .
-git commit -m "feat: add new feature"
-
-# Push в репозиторій
-git push origin feature/new-feature
-```
-
-### Code Style
-```bash
-# Форматування коду
-make format
-
-# Перевірка стилю
-make lint
-```
-
-## 📚 Документація API
-
-### Swagger UI
-- **Development**: http://localhost:8000/api/schema/swagger-ui/
-- **ReDoc**: http://localhost:8000/api/schema/redoc/
-
-### Основні endpoints
-- `GET /api/accounts/` - рахунки
-- `GET /api/transactions/` - транзакції
-- `GET /api/categories/` - категорії
-- `GET /api/budgets/` - бюджети
-- `GET /api/fop/profiles/` - ФОП профілі
-- `GET /api/notifications/` - нотифікації
-
-## 🐛 Troubleshooting
-
-### Часті проблеми
-
-#### 1. Порт вже використовується
-```bash
-# Перевірте, які процеси використовують порт
-netstat -tulpn | grep :3000
-# Зупиніть процес або змініть порт в docker-compose.yml
-```
-
-#### 2. Проблеми з базою даних
-```bash
-# Перезапуск PostgreSQL
-docker-compose restart postgres
-
-# Перевірка логів
-docker-compose logs postgres
-```
-
-#### 3. Проблеми з frontend
-```bash
-# Очищення кешу
-docker-compose exec frontend npm run build
-
-# Перезапуск
-docker-compose restart frontend
-```
-
-### Логи
-```bash
-# Всі сервіси
-make logs
-
-# Конкретний сервіс
-docker-compose logs -f backend
-docker-compose logs -f frontend
-```
-
-## 📞 Підтримка
-
-- **Issues**: GitHub Issues
-- **Documentation**: Wiki
-- **Discussions**: GitHub Discussions
+1. Fork репозиторій
+2. Створіть feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit зміни (`git commit -m 'Add amazing feature'`)
+4. Push до branch (`git push origin feature/amazing-feature`)
+5. Відкрийте Pull Request
 
 ## 📄 Ліцензія
 
-MIT License - дивіться [LICENSE](LICENSE) файл для деталей.
+Цей проект ліцензовано під MIT License - дивіться файл [LICENSE](LICENSE) для деталей.
+
+## 📞 Підтримка
+
+Якщо у вас є питання або проблеми:
+
+1. Перевірте [Issues](https://github.com/yourusername/mfinance/issues)
+2. Створіть новий Issue з детальним описом
+3. Зв'яжіться з командою розробки
+
+## 🗺 Roadmap
+
+- [ ] Мобільний додаток на Flutter
+- [ ] Інтеграція з більшою кількістю банків
+- [ ] AI-асистент для фінансового планування
+- [ ] Інтеграція з 1C
+- [ ] Мульти-валюта підтримка
 
 ---
 
-**MFinance** - автоматизація обліку фінансів для ФОП та малого бізнесу в Україні 🇺🇦
+**MFinance** - ваш надійний партнер у фінансовому управлінні! 🚀

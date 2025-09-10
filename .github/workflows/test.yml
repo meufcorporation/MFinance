@@ -1,0 +1,235 @@
+name: Tests
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  backend-tests:
+    runs-on: ubuntu-latest
+    
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: mfinance_test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+      
+      redis:
+        image: redis:7
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+    
+    - name: Cache pip dependencies
+      uses: actions/cache@v3
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-
+    
+    - name: Install dependencies
+      run: |
+        cd backend
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+    
+    - name: Run migrations
+      run: |
+        cd backend
+        python manage.py migrate --settings=mfinance.test_settings
+      env:
+        DATABASE_URL: postgres://postgres:postgres@localhost:5432/mfinance_test
+    
+    - name: Run backend tests
+      run: |
+        cd backend
+        python -m pytest tests/ -v --cov=. --cov-report=xml --cov-report=html
+      env:
+        DATABASE_URL: postgres://postgres:postgres@localhost:5432/mfinance_test
+    
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v3
+      with:
+        file: ./backend/coverage.xml
+        flags: backend
+        name: backend-coverage
+
+  frontend-tests:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        cache: 'npm'
+        cache-dependency-path: frontend/web-cabinet/package-lock.json
+    
+    - name: Install dependencies
+      run: |
+        cd frontend/web-cabinet
+        npm ci
+    
+    - name: Run linting
+      run: |
+        cd frontend/web-cabinet
+        npm run lint
+    
+    - name: Build application
+      run: |
+        cd frontend/web-cabinet
+        npm run build
+    
+    - name: Install Playwright browsers
+      run: |
+        cd frontend/web-cabinet
+        npx playwright install --with-deps
+    
+    - name: Run E2E tests
+      run: |
+        cd frontend/web-cabinet
+        npm run test
+      env:
+        CI: true
+
+  integration-tests:
+    runs-on: ubuntu-latest
+    
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: mfinance_test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+      
+      redis:
+        image: redis:7
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+      
+      keycloak:
+        image: quay.io/keycloak/keycloak:latest
+        env:
+          KEYCLOAK_ADMIN: admin
+          KEYCLOAK_ADMIN_PASSWORD: admin
+          KC_DB: postgres
+          KC_DB_URL: jdbc:postgresql://postgres:5432/mfinance_test
+          KC_DB_USERNAME: postgres
+          KC_DB_PASSWORD: postgres
+        options: >-
+          --health-cmd "curl -f http://localhost:8080/health/ready || exit 1"
+          --health-interval 30s
+          --health-timeout 10s
+          --health-retries 5
+        ports:
+          - 8080:8080
+
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+    
+    - name: Install dependencies
+      run: |
+        cd backend
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+    
+    - name: Wait for services
+      run: |
+        sleep 30
+    
+    - name: Run migrations
+      run: |
+        cd backend
+        python manage.py migrate --settings=mfinance.test_settings
+      env:
+        DATABASE_URL: postgres://postgres:postgres@localhost:5432/mfinance_test
+    
+    - name: Setup Keycloak
+      run: |
+        cd backend
+        python scripts/setup-keycloak.py
+      env:
+        KEYCLOAK_URL: http://localhost:8080
+        DATABASE_URL: postgres://postgres:postgres@localhost:5432/mfinance_test
+    
+    - name: Run integration tests
+      run: |
+        cd backend
+        python -m pytest tests/ -v -m integration
+      env:
+        DATABASE_URL: postgres://postgres:postgres@localhost:5432/mfinance_test
+        KEYCLOAK_URL: http://localhost:8080
+
+  security-tests:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+    
+    - name: Install dependencies
+      run: |
+        cd backend
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install bandit safety
+    
+    - name: Run security scan
+      run: |
+        cd backend
+        bandit -r . -f json -o bandit-report.json
+        safety check --json --output safety-report.json
+    
+    - name: Upload security reports
+      uses: actions/upload-artifact@v3
+      with:
+        name: security-reports
+        path: |
+          backend/bandit-report.json
+          backend/safety-report.json

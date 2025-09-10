@@ -1,136 +1,176 @@
-# MFinance - Makefile for Docker Management
-.PHONY: help build up down restart logs clean test lint format
+# MFinance Makefile
+
+.PHONY: help install test test-backend test-frontend test-e2e test-coverage clean dev build
 
 # Default target
 help:
-	@echo "MFinance - Financial Management System"
-	@echo "Available commands:"
-	@echo "  build          - Build all Docker images"
-	@echo "  up             - Start all services in development mode"
-	@echo "  up-prod        - Start all services in production mode"
-	@echo "  down           - Stop all services"
-	@echo "  restart        - Restart all services"
-	@echo "  logs           - Show logs for all services"
-	@echo "  logs-backend   - Show backend logs"
-	@echo "  logs-frontend  - Show frontend logs"
-	@echo "  clean          - Clean up containers and volumes"
-	@echo "  test           - Run tests"
-	@echo "  test-backend   - Run backend tests"
-	@echo "  test-frontend  - Run frontend tests"
-	@echo "  lint           - Run linting"
-	@echo "  format         - Format code"
-	@echo "  migrate        - Run database migrations"
-	@echo "  shell-backend  - Open backend shell"
-	@echo "  shell-frontend - Open frontend shell"
-	@echo "  status         - Show service status"
+	@echo "MFinance - Available commands:"
+	@echo ""
+	@echo "Installation:"
+	@echo "  install          Install all dependencies"
+	@echo "  install-backend  Install backend dependencies"
+	@echo "  install-frontend Install frontend dependencies"
+	@echo ""
+	@echo "Development:"
+	@echo "  dev              Start development environment"
+	@echo "  dev-backend      Start backend development server"
+	@echo "  dev-frontend     Start frontend development server"
+	@echo ""
+	@echo "Testing:"
+	@echo "  test             Run all tests"
+	@echo "  test-backend     Run backend tests"
+	@echo "  test-frontend    Run frontend tests"
+	@echo "  test-e2e         Run E2E tests"
+	@echo "  test-coverage    Run tests with coverage report"
+	@echo ""
+	@echo "Database:"
+	@echo "  migrate          Run database migrations"
+	@echo "  migrate-backend  Run backend migrations"
+	@echo "  superuser        Create Django superuser"
+	@echo ""
+	@echo "Docker:"
+	@echo "  docker-build     Build Docker images"
+	@echo "  docker-up        Start Docker containers"
+	@echo "  docker-down      Stop Docker containers"
+	@echo "  docker-logs      View Docker logs"
+	@echo ""
+	@echo "Utilities:"
+	@echo "  clean            Clean temporary files"
+	@echo "  lint             Run linting"
+	@echo "  format           Format code"
 
-# Build all images
-build:
-	docker-compose build
+# Installation
+install: install-backend install-frontend
 
-# Start development environment
-up:
+install-backend:
+	@echo "Installing backend dependencies..."
+	cd backend && pip install -r requirements.txt
+
+install-frontend:
+	@echo "Installing frontend dependencies..."
+	cd frontend/web-cabinet && npm install
+
+# Development
+dev:
+	@echo "Starting development environment..."
 	docker-compose up -d
-	@echo "Services started:"
+	@echo "Development environment started. Access:"
 	@echo "  Frontend: http://localhost:3000"
 	@echo "  Backend:  http://localhost:8000"
-	@echo "  Admin:    http://localhost:8000/admin"
-	@echo "  Grafana:  http://localhost:3001 (admin/admin)"
-	@echo "  MinIO:    http://localhost:9000 (minioadmin/minioadmin)"
+	@echo "  Keycloak: http://localhost:8080"
 
-# Start production environment
-up-prod:
-	docker-compose -f docker-compose.prod.yml up -d
+dev-backend:
+	@echo "Starting backend development server..."
+	cd backend && python manage.py runserver
 
-# Stop all services
-down:
+dev-frontend:
+	@echo "Starting frontend development server..."
+	cd frontend/web-cabinet && npm run dev
+
+# Testing
+test: test-backend test-frontend test-e2e
+
+test-backend:
+	@echo "Running backend tests..."
+	cd backend && python -m pytest tests/ -v --cov=. --cov-report=html --cov-report=term-missing
+
+test-frontend:
+	@echo "Running frontend tests..."
+	cd frontend/web-cabinet && npm test
+
+test-e2e:
+	@echo "Running E2E tests..."
+	cd frontend/web-cabinet && npx playwright test
+
+test-coverage:
+	@echo "Running tests with coverage..."
+	cd backend && python -m pytest tests/ -v --cov=. --cov-report=html --cov-report=term-missing --cov-fail-under=80
+
+# Database
+migrate: migrate-backend
+
+migrate-backend:
+	@echo "Running backend migrations..."
+	cd backend && python manage.py makemigrations
+	cd backend && python manage.py migrate
+
+superuser:
+	@echo "Creating Django superuser..."
+	cd backend && python manage.py createsuperuser
+
+# Docker
+docker-build:
+	@echo "Building Docker images..."
+	docker-compose build
+
+docker-up:
+	@echo "Starting Docker containers..."
+	docker-compose up -d
+
+docker-down:
+	@echo "Stopping Docker containers..."
 	docker-compose down
 
-# Restart all services
-restart:
-	docker-compose restart
-
-# Show logs
-logs:
+docker-logs:
+	@echo "Viewing Docker logs..."
 	docker-compose logs -f
 
-# Show backend logs
-logs-backend:
-	docker-compose logs -f backend worker beat
-
-# Show frontend logs
-logs-frontend:
-	docker-compose logs -f frontend
-
-# Clean up
+# Utilities
 clean:
-	docker-compose down -v
-	docker system prune -f
-	docker volume prune -f
+	@echo "Cleaning temporary files..."
+	find . -type f -name "*.pyc" -delete
+	find . -type d -name "__pycache__" -delete
+	find . -type d -name ".pytest_cache" -delete
+	find . -type d -name "htmlcov" -delete
+	find . -type d -name "test-results" -delete
+	find . -type d -name "node_modules" -delete
+	find . -type f -name "package-lock.json" -delete
 
-# Run all tests
-test:
-	docker-compose -f docker-compose.test.yml up --build --abort-on-container-exit
-
-# Run backend tests
-test-backend:
-	docker-compose -f docker-compose.test.yml up --build --abort-on-container-exit backend-test
-
-# Run frontend tests
-test-frontend:
-	docker-compose -f docker-compose.test.yml up --build --abort-on-container-exit frontend-test
-
-# Run linting
 lint:
-	docker-compose exec backend flake8 .
-	docker-compose exec frontend npm run lint
+	@echo "Running linting..."
+	cd backend && python -m flake8 .
+	cd frontend/web-cabinet && npm run lint
 
-# Format code
 format:
-	docker-compose exec backend black .
-	docker-compose exec backend isort .
-	docker-compose exec frontend npm run format
+	@echo "Formatting code..."
+	cd backend && python -m black .
+	cd frontend/web-cabinet && npm run format
 
-# Run migrations
-migrate:
-	docker-compose exec backend python manage.py migrate
+# Test specific modules
+test-auth:
+	@echo "Running auth system tests..."
+	cd backend && python -m pytest tests/test_auth_system.py -v
 
-# Open backend shell
-shell-backend:
-	docker-compose exec backend python manage.py shell
+test-finance:
+	@echo "Running finance module tests..."
+	cd backend && python -m pytest tests/test_finance.py -v
 
-# Open frontend shell
-shell-frontend:
-	docker-compose exec frontend sh
+test-payments:
+	@echo "Running payments module tests..."
+	cd backend && python -m pytest tests/test_payments.py -v
 
-# Show service status
-status:
-	docker-compose ps
+test-fop:
+	@echo "Running FOP module tests..."
+	cd backend && python -m pytest tests/test_fop.py -v
 
-# Create superuser
-createsuperuser:
-	docker-compose exec backend python manage.py createsuperuser
+test-reports:
+	@echo "Running reports module tests..."
+	cd backend && python -m pytest tests/test_reports.py -v
 
-# Load test data
-loaddata:
-	docker-compose exec backend python manage.py loaddata fixtures/test_data.json
+# Setup commands
+setup-keycloak:
+	@echo "Setting up Keycloak..."
+	cd backend && python scripts/setup-keycloak.py
 
-# Collect static files
-collectstatic:
-	docker-compose exec backend python manage.py collectstatic --noinput
+setup-payment-providers:
+	@echo "Setting up payment providers..."
+	cd backend && python manage.py setup_payment_providers
 
-# Backup database
-backup:
-	docker-compose exec postgres pg_dump -U postgres mfinance > backup_$(shell date +%Y%m%d_%H%M%S).sql
+setup-report-templates:
+	@echo "Setting up report templates..."
+	cd backend && python manage.py setup_report_templates
 
-# Restore database
-restore:
-	docker-compose exec -T postgres psql -U postgres mfinance < $(FILE)
-
-# Health check
-health:
-	@echo "Checking service health..."
-	@curl -f http://localhost:3000 > /dev/null 2>&1 && echo "✅ Frontend: OK" || echo "❌ Frontend: DOWN"
-	@curl -f http://localhost:8000/health/ > /dev/null 2>&1 && echo "✅ Backend: OK" || echo "❌ Backend: DOWN"
-	@curl -f http://localhost:3001 > /dev/null 2>&1 && echo "✅ Grafana: OK" || echo "❌ Grafana: DOWN"
-	@curl -f http://localhost:9000 > /dev/null 2>&1 && echo "✅ MinIO: OK" || echo "❌ MinIO: DOWN"
+# Full setup
+setup: install migrate setup-keycloak setup-payment-providers setup-report-templates
+	@echo "MFinance setup complete!"
+	@echo "Run 'make dev' to start the development environment."

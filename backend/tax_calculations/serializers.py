@@ -68,7 +68,7 @@ class TaxExemptionSerializer(serializers.ModelSerializer):
 
 class TaxCalculationRequestSerializer(serializers.Serializer):
     """Serializer for tax calculation requests"""
-    fop_profile = serializers.PrimaryKeyRelatedField(queryset=None)  # Will be set in view
+    fop_profile = serializers.PrimaryKeyRelatedField(queryset=None, read_only=True)  # Will be set in view
     calculation_type = serializers.ChoiceField(choices=TaxCalculation.CALCULATION_TYPES)
     year = serializers.IntegerField()
     month = serializers.IntegerField(required=False, allow_null=True)

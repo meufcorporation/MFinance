@@ -7,6 +7,7 @@ from django_filters import rest_framework as filters
 from django.db.models import Sum, Count, Q
 from django.utils import timezone
 from datetime import datetime, timedelta
+from django.db import models
 from .models import TaxRate, TaxCalculation, TaxPayment, TaxRule, TaxExemption
 from .serializers import (
     TaxRateSerializer, TaxCalculationSerializer, TaxPaymentSerializer,

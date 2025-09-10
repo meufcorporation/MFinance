@@ -8,12 +8,15 @@ from django.conf.urls.static import static
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('api/auth/', include('auth_system.urls')),
     path('api/finance/', include('finance.urls')),
     path('api/fop/', include('fop.urls')),
     path('api/notifications/', include('notifications.urls')),
     path('api/bank/', include('bank_integration.urls')),
     path('api/tax/', include('tax_calculations.urls')),
     path('api/analytics/', include('analytics.urls')),
+    path('api/payments/', include('payments.urls')),
+    path('api/reports/', include('reports.urls')),
 ]
 
 if settings.DEBUG:

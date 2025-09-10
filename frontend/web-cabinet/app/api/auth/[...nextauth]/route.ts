@@ -1,8 +1,14 @@
 import NextAuth, { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
+import KeycloakProvider from "next-auth/providers/keycloak";
 
 export const authOptions: NextAuthOptions = {
   providers: [
+    KeycloakProvider({
+      clientId: process.env.KEYCLOAK_CLIENT_ID || "mfinance-web",
+      clientSecret: process.env.KEYCLOAK_CLIENT_SECRET || "mfinance-secret-key-2024",
+      issuer: process.env.KEYCLOAK_ISSUER || "http://localhost:8080/realms/mfinance",
+    }),
     CredentialsProvider({
       name: "credentials",
       credentials: {

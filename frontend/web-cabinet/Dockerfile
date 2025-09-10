@@ -56,11 +56,8 @@ RUN npm ci
 # Copy source code
 COPY . .
 
-# Create non-root user
-RUN addgroup --system --gid 1001 nodejs
-RUN adduser --system --uid 1001 nextjs
-RUN chown -R nextjs:nodejs /app
-USER nextjs
+# Create .next directory
+RUN mkdir -p .next
 
 EXPOSE 3000
 

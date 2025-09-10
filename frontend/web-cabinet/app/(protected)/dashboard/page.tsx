@@ -22,11 +22,20 @@ interface Transaction {
   category_name?: string;
 }
 
+interface TaxDeadline {
+  id: number;
+  payment_type: string;
+  amount: string;
+  due_date: string;
+  status: string;
+}
+
 export default function Dashboard() {
   const { data: session, status } = useSession();
   const router = useRouter();
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [taxDeadlines, setTaxDeadlines] = useState<TaxDeadline[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -43,11 +52,35 @@ export default function Dashboard() {
 
   const fetchDashboardData = async () => {
     try {
-      // Тут буде реальний API запит
-      // const response = await fetch('/api/accounts');
-      // const data = await response.json();
-      
-      // Поки що використовуємо мокові дані
+      // Fetch accounts from API
+      const accountsResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/finance/accounts/`);
+      if (accountsResponse.ok) {
+        const accountsData = await accountsResponse.json();
+        setAccounts(accountsData.results || accountsData);
+      } else {
+        throw new Error('Failed to fetch accounts');
+      }
+
+      // Fetch recent transactions
+      const transactionsResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/finance/transactions/?limit=5&ordering=-date`);
+      if (transactionsResponse.ok) {
+        const transactionsData = await transactionsResponse.json();
+        setTransactions(transactionsData.results || transactionsData);
+      } else {
+        throw new Error('Failed to fetch transactions');
+      }
+
+      // Fetch tax deadlines
+      const taxResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/tax/payments/?status=pending&ordering=due_date`);
+      if (taxResponse.ok) {
+        const taxData = await taxResponse.json();
+        setTaxDeadlines(taxData.results || taxData);
+      } else {
+        throw new Error('Failed to fetch tax deadlines');
+      }
+    } catch (error) {
+      console.error("Error fetching dashboard data:", error);
+      // Fallback to mock data
       setAccounts([
         { id: 1, name: "Основной рахунок", bank_name: "ПриватБанк", balance: "15000.00", currency: "UAH", account_type: "checking" },
         { id: 2, name: "Депозит", bank_name: "Монобанк", balance: "50000.00", currency: "UAH", account_type: "savings" },
@@ -59,8 +92,11 @@ export default function Dashboard() {
         { id: 2, description: "Продукти в супермаркеті", amount: "1200.00", transaction_type: "expense", date: "2025-09-02", category_name: "Продукти" },
         { id: 3, description: "Бензин", amount: "800.00", transaction_type: "expense", date: "2025-09-03", category_name: "Транспорт" }
       ]);
-    } catch (error) {
-      console.error("Error fetching dashboard data:", error);
+      
+      setTaxDeadlines([
+        { id: 1, payment_type: "single_tax", amount: "1000.00", due_date: "2025-01-20", status: "pending" },
+        { id: 2, payment_type: "esv", amount: "1760.00", due_date: "2025-01-25", status: "pending" }
+      ]);
     } finally {
       setLoading(false);
     }
@@ -148,7 +184,7 @@ export default function Dashboard() {
             </div>
             <div className="ml-4">
               <p className="text-sm font-medium text-gray-600">Дедлайни податків</p>
-              <p className="text-2xl font-bold text-yellow-600">3</p>
+              <p className="text-2xl font-bold text-yellow-600">{taxDeadlines.length}</p>
             </div>
           </div>
         </div>
@@ -220,6 +256,48 @@ export default function Dashboard() {
                 </div>
               </div>
             ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Податкові дедлайни */}
+      <div className="bg-white rounded-lg shadow-md border">
+        <div className="p-6 border-b">
+          <h2 className="text-xl font-semibold">Податкові дедлайни</h2>
+        </div>
+        <div className="p-6">
+          <div className="space-y-4">
+            {taxDeadlines.length > 0 ? (
+              taxDeadlines.map((deadline) => (
+                <div key={deadline.id} className="flex items-center justify-between p-4 border rounded-lg">
+                  <div className="flex items-center space-x-4">
+                    <div className="w-10 h-10 bg-yellow-100 rounded-full flex items-center justify-center">
+                      <span className="text-yellow-600 font-semibold">₴</span>
+                    </div>
+                    <div>
+                      <p className="font-medium">
+                        {deadline.payment_type === 'single_tax' ? 'Єдиний податок' : 
+                         deadline.payment_type === 'esv' ? 'ЄСВ' : 
+                         deadline.payment_type === 'vat' ? 'ПДВ' : deadline.payment_type}
+                      </p>
+                      <p className="text-sm text-gray-600">
+                        Дедлайн: {new Date(deadline.due_date).toLocaleDateString()}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-lg font-semibold text-yellow-600">
+                      {parseFloat(deadline.amount).toLocaleString()} UAH
+                    </p>
+                    <p className="text-sm text-gray-600 capitalize">{deadline.status}</p>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <div className="text-center py-8 text-gray-500">
+                <p>Немає активних податкових дедлайнів</p>
+              </div>
+            )}
           </div>
         </div>
       </div>

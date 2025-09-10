@@ -14,8 +14,9 @@ export default function Navigation() {
     { name: 'Dashboard', href: '/dashboard', icon: '📊' },
     { name: 'Транзакції', href: '/transactions', icon: '💳' },
     { name: 'ФОП', href: '/fop', icon: '🏢' },
+    { name: 'Платежі', href: '/payments', icon: '💳' },
     { name: 'Бюджети', href: '/budgets', icon: '💰' },
-    { name: 'Звіти', href: '/reports', icon: '📈' },
+    { name: 'Звіти', href: '/reports', icon: '📋' },
     { name: 'Сповіщення', href: '/notifications', icon: '🔔' },
     { name: 'Профіль', href: '/profile', icon: '👤' },
   ];
